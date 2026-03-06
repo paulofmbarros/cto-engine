@@ -1,0 +1,171 @@
+# Challenge Log
+# Tracks when AI warned about risks and whether those warnings proved correct
+# Used to calibrate trust in AI recommendations over time
+
+version: "1.0"
+
+# Each challenge entry represents an instance where:
+# - AI warned about a risk or recommended against something
+# - Human proceeded anyway (or chose differently)
+# - Outcome can be tracked to see if AI was correct
+
+challenges:
+  - id: "YYYY-MM-DD-001"  # Unique ID: date + sequence
+    date: "YYYY-MM-DD"
+    week_number: 12
+    
+    # What did AI warn about?
+    ai_warning:
+      type: "risk"  # Options: risk, technical_debt, scope_creep, dependency, timeline
+      severity: "medium"  # Options: low, medium, high, critical
+      summary: "API rate limits may cause production issues"
+      details: |
+        AI CTO warned that the current implementation does not handle
+        API rate limits gracefully and could cause cascading failures
+        in production under high load.
+      recommended_action: "Implement circuit breaker pattern before launch"
+      
+    # What did human decide?
+    human_decision:
+      action: "proceeded_without_mitigation"  # Options: proceeded_without_mitigation, proceeded_with_partial_mitigation, followed_recommendation, chose_alternative
+      rationale: "Time pressure to launch; will monitor and fix if needed"
+      plan_commit: "abcdef1234567890abcdef1234567890abcdef12"  # Full 40-char git commit SHA of approved plan
+      
+    # What actually happened?
+    outcome:
+      status: "ai_was_correct"  # Options: ai_was_correct, ai_was_wrong, too_early_to_tell, outcome_inconclusive
+      resolution_date: "YYYY-MM-DD"  # When outcome became clear (null if pending)
+      what_happened: |
+        Week 3 after launch: API rate limits were hit during peak usage,
+        causing 2-hour downtime. Emergency fix required.
+      impact:
+        severity: "high"  # Options: none, low, medium, high, critical
+        time_cost_hours: 8  # Time spent fixing/mitigating
+        financial_cost: 0  # If quantifiable
+        user_impact: "200+ users affected during downtime"
+      mitigation_applied: "Implemented circuit breaker + rate limit handling"
+      
+    # Lessons learned
+    lessons:
+      - "AI warnings about production reliability should be weighted higher"
+      - "Time pressure is not a valid reason to skip safety features"
+      - "Circuit breaker pattern should be in standard template"
+      
+    # Trust calibration (auto-computed)
+    trust_impact:
+      ai_credibility_score: +1.5  # How much this affects trust in AI (-3 to +3)
+      category: "production_reliability"  # What domain this affects
+
+  # Template for new entries (copy and fill)
+  # - id: "YYYY-MM-DD-XXX"
+  #   date: "YYYY-MM-DD"
+  #   week_number: X
+  #   ai_warning:
+  #     type: ""
+  #     severity: ""
+  #     summary: ""
+  #     details: ""
+  #     recommended_action: ""
+  #   human_decision:
+  #     action: ""
+  #     rationale: ""
+  #     plan_commit: ""
+  #   outcome:
+  #     status: "too_early_to_tell"
+  #     resolution_date: null
+  #     what_happened: ""
+  #     impact:
+  #       severity: ""
+  #       time_cost_hours: 0
+  #       financial_cost: 0
+  #       user_impact: ""
+  #     mitigation_applied: ""
+  #   lessons: []
+  #   trust_impact:
+  #     ai_credibility_score: 0
+  #     category: ""
+
+# Aggregate statistics (auto-computed by CTO Engine)
+statistics:
+  total_challenges: 1
+  outcomes:
+    ai_was_correct: 1
+    ai_was_wrong: 0
+    too_early_to_tell: 0
+    outcome_inconclusive: 0
+  
+  # AI accuracy by category
+  accuracy_by_category:
+    production_reliability:
+      correct: 1
+      wrong: 0
+      accuracy_rate: 1.0
+    technical_debt:
+      correct: 0
+      wrong: 0
+      accuracy_rate: null
+    scope_creep:
+      correct: 0
+      wrong: 0
+      accuracy_rate: null
+  
+  # AI accuracy by severity
+  accuracy_by_severity:
+    critical:
+      correct: 0
+      wrong: 0
+    high:
+      correct: 0
+      wrong: 0
+    medium:
+      correct: 1
+      wrong: 0
+    low:
+      correct: 0
+      wrong: 0
+  
+  # Overall trust score (-10 to +10, based on weighted outcomes)
+  overall_trust_score: 1.5
+  
+  # Cost of ignoring AI
+  total_cost_of_ignoring:
+    time_hours: 8
+    financial: 0
+    high_severity_incidents: 1
+  
+  # Last updated
+  last_computed: "YYYY-MM-DD"
+
+# Guidelines for logging challenges
+
+# WHEN TO LOG:
+# - AI explicitly warns against something (not just mentions a tradeoff)
+# - Warning is specific and actionable (not generic advice)
+# - Human chooses to proceed differently than AI recommended
+# - Decision is significant enough to track (affects >1 day of work)
+
+# WHEN NOT TO LOG:
+# - AI presents options without preference
+# - Human follows AI recommendation exactly
+# - Disagreement is about minor details (naming, formatting)
+# - Decision is easily reversible with <1 hour of work
+
+# HOW TO UPDATE OUTCOMES:
+# - Update outcome.status when evidence emerges (usually 1-4 weeks later)
+# - Be honest about impact (inflating or deflating damages calibration)
+# - If outcome is ambiguous, use "outcome_inconclusive" not "ai_was_wrong"
+# - Add lessons learned even if AI was wrong (why was it wrong?)
+
+# TRUST SCORE INTERPRETATION:
+# -10 to -5: AI consistently wrong, ignore recommendations
+#  -5 to  0: AI unreliable, verify everything
+#   0 to +3: AI moderately helpful, use with caution
+#  +3 to +7: AI reliably helpful, weight recommendations heavily
+#  +7 to +10: AI highly accurate, rarely wrong
+
+metadata:
+  schema_version: "1.0"
+  project: "Project Name"
+  created: "YYYY-MM-DD"
+  last_updated: "YYYY-MM-DD"
+  cto_engine_version: "x.x.x"

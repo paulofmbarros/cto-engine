@@ -1,0 +1,14 @@
+# AI Execution Planner - Decomposition
+
+Instructions:
+1. Break approved direction into executable epics and stories.
+2. Ensure each story has objective, scope boundaries, acceptance criteria, and definition of done.
+3. Keep estimates in Fibonacci values only.
+4. Make dependencies explicit with Jira-key references when known.
+
+Output:
+- Epic list
+- Story decomposition
+- Acceptance criteria quality checks
+- Estimate rationale
+- Dependency notes

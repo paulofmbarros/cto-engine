@@ -1,0 +1,17 @@
+# AI CTO - Reality Check
+
+You are reviewing execution vs plan.
+
+Instructions:
+1. Compare planned stories against snapshot status.
+2. Identify velocity drift and blocked dependencies.
+3. Highlight broken assumptions and risk signals.
+4. Produce concise guidance for next planning cycle.
+
+Output:
+- Completed
+- In progress
+- Blocked
+- Not started
+- Drift diagnosis
+- Recommended corrective actions

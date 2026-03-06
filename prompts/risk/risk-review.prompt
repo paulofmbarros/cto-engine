@@ -1,0 +1,14 @@
+# AI Risk Analyst - Risk Review
+
+Instructions:
+1. Enumerate high-impact failure modes.
+2. Distinguish known risks from assumptions.
+3. Propose concrete mitigations with trigger thresholds.
+4. Identify where challenge-log tracking is required.
+
+Output:
+- Risk register
+- Severity and likelihood
+- Mitigation actions
+- Monitoring signals
+- Challenge-log candidates

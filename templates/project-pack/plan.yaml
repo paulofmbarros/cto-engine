@@ -1,0 +1,437 @@
+version: "1.0"
+
+goal: "Enable users to log and track gym workouts with AI-generated exercise recommendations"
+
+success_criteria:
+  - "Users can create a workout session and log 3+ exercises within 2 minutes"
+  - "AI recommendation engine suggests relevant exercises based on workout history"
+  - "90%+ of logged workouts are successfully saved to the database"
+  - "Exercise library contains 100+ exercises with proper form videos"
+
+risks:
+  - risk: "AI recommendations may be irrelevant for beginners with no history"
+    mitigation: "Implement onboarding flow to capture fitness goals and experience level"
+    severity: "high"
+    ai_warned: true
+    
+  - risk: "Form video loading may be slow on mobile networks"
+    mitigation: "Implement progressive loading and caching strategy"
+    severity: "medium"
+    ai_warned: false
+    
+  - risk: "Users may log incorrect exercise data (typos, wrong weights)"
+    mitigation: "Add validation and suggested correction UI"
+    severity: "low"
+    ai_warned: false
+
+work_breakdown:
+  - epic_key: ""  # Will be auto-generated
+    summary: "Workout logging and tracking system"
+    description: |
+      Core functionality for users to create workout sessions, log exercises,
+      track sets/reps/weight, and view workout history.
+    stories:
+      - story_key: ""
+        summary: "Implement Supabase JWT authentication middleware"
+        objective: "Allow the backend to validate Supabase-issued JWTs and extract the authenticated user identity."
+        scope:
+          in_scope:
+            - "JWT bearer authentication"
+            - "Supabase JWKS validation"
+            - "User ID extraction from sub claim"
+          out_of_scope:
+            - "Authorization rules"
+            - "Role-based access"
+            - "Frontend auth UI"
+        acceptance_criteria:
+          - "Unauthenticated requests are rejected"
+          - "Valid Supabase JWT is accepted"
+          - "userId is extracted from token"
+          - "Protected endpoints require auth"
+        references:
+          - title: "Backend Work Contract"
+            url: "https://notion.so/backend-contract"
+          - title: "Supabase Auth (Option A decision)"
+            url: "https://notion.so/auth-decision"
+        constraints:
+          - "Backend validates JWT only"
+          - "No custom auth logic"
+          - "No user table required yet"
+        definition_of_done:
+          - "Auth middleware works"
+          - "AC verified"
+          - "Jira updated"
+        estimate: 5
+        priority: "highest"
+        labels:
+          - "cto-engine"
+          - "mvp"
+          - "backend"
+          - "auth"
+        
+      - story_key: ""
+        summary: "Create workout session with date and workout type selection"
+        objective: "Enable users to initiate a new workout session so they can begin logging exercises immediately."
+        scope:
+          in_scope:
+            - "New workout button on dashboard"
+            - "Date picker for today or past dates (30 days back)"
+            - "Workout type selector (strength, cardio, flexibility)"
+            - "Session creation in database"
+          out_of_scope:
+            - "Exercise logging within session (separate story)"
+            - "Workout templates or presets"
+            - "Social sharing of workouts"
+        acceptance_criteria:
+          - "User can click 'New Workout' button from dashboard"
+          - "Date picker allows selecting today or past dates (up to 30 days back)"
+          - "Workout type selector shows all available types with icons"
+          - "Session is created in database with user_id and timestamp"
+          - "User is redirected to exercise logging screen"
+        references:
+          - title: "UI Mockups - Workout Flow"
+            url: "https://figma.com/workout-flow"
+        constraints:
+          - "Must work offline (local storage fallback)"
+          - "Date cannot be in the future"
+          - "Maximum 30 days historical logging"
+        definition_of_done:
+          - "Component built and tested"
+          - "Database migration applied"
+          - "Manual QA passed"
+          - "Jira updated"
+        estimate: 3
+        priority: "highest"
+        labels:
+          - "cto-engine"
+          - "mvp"
+          - "frontend"
+        
+      - story_key: ""
+        summary: "Log exercise with sets, reps, and weight tracking"
+        objective: "Allow users to search for and log exercises with detailed set/rep/weight data so they can track their workout progress accurately."
+        scope:
+          in_scope:
+            - "Exercise search with autocomplete"
+            - "Add multiple sets with reps and weight"
+            - "Edit and delete sets before workout completion"
+            - "Input validation for numeric fields"
+          out_of_scope:
+            - "Rest timer between sets"
+            - "Exercise video previews"
+            - "Personal records tracking"
+        acceptance_criteria:
+          - "Exercise search returns results as user types (min 2 characters)"
+          - "Search includes exercise name, muscle group, and equipment"
+          - "User can add multiple sets with reps and weight per set"
+          - "Sets can be edited or deleted before workout completion"
+          - "Data is validated (positive integers for reps, realistic weight ranges)"
+          - "All logged data is saved to workout_exercises table"
+        references:
+          - title: "Exercise Database Schema"
+            url: "https://notion.so/exercise-schema"
+        constraints:
+          - "Weight range: 0-1000 lbs or 0-500 kg"
+          - "Reps range: 1-999"
+          - "Maximum 20 sets per exercise"
+        definition_of_done:
+          - "Search and logging functionality works"
+          - "Input validation prevents invalid data"
+          - "All AC verified"
+          - "Jira updated"
+        estimate: 5
+        priority: "highest"
+        labels:
+          - "cto-engine"
+          - "mvp"
+          - "frontend"
+          - "backend"
+        
+      - story_key: ""
+        summary: "Display workout history with summary stats"
+        objective: "Give users visibility into their past workouts so they can review progress and identify patterns over time."
+        scope:
+          in_scope:
+            - "List of last 10 workouts on dashboard"
+            - "Workout summary cards (date, duration, exercises, volume)"
+            - "Expandable detail view for each workout"
+            - "Empty state for new users"
+          out_of_scope:
+            - "Advanced analytics or charts"
+            - "Filtering or search within history"
+            - "Export to CSV or PDF"
+        acceptance_criteria:
+          - "Dashboard shows last 10 workouts in reverse chronological order"
+          - "Each workout summary shows date, duration, exercise count, total volume"
+          - "Clicking a workout expands to show all exercises and sets"
+          - "Empty state is handled gracefully for new users"
+          - "Pagination or infinite scroll for >10 workouts"
+        references:
+          - title: "Dashboard Design Spec"
+            url: "https://figma.com/dashboard"
+        constraints:
+          - "Initial load shows max 10 workouts for performance"
+          - "Must load in <1 second on 4G connection"
+        definition_of_done:
+          - "History component renders correctly"
+          - "Performance requirements met"
+          - "All AC verified"
+          - "Jira updated"
+        estimate: 3
+        priority: "high"
+        labels:
+          - "cto-engine"
+          - "mvp"
+          - "frontend"
+        dependencies:
+          - "PROJ-101"  # Exercise logging story must be complete first
+
+  - epic_key: ""
+    summary: "AI-powered exercise recommendation engine"
+    description: |
+      Machine learning system that analyzes user workout history and
+      suggests relevant exercises to add to current workout session.
+    stories:
+      - story_key: ""
+        summary: "Build recommendation model based on workout patterns"
+        objective: "Create an ML system that learns from user workout history to suggest relevant exercises, improving workout planning and muscle group balance."
+        scope:
+          in_scope:
+            - "Collaborative filtering algorithm"
+            - "Analysis of last 30 days workout data"
+            - "Muscle group balance consideration"
+            - "Confidence scoring for recommendations"
+            - "Nightly model retraining"
+          out_of_scope:
+            - "Real-time model updates during workout"
+            - "Personalized rep/weight suggestions"
+            - "Integration with wearable devices"
+        acceptance_criteria:
+          - "Algorithm analyzes last 30 days of workout data"
+          - "Recommendations consider muscle group balance (avoid overtraining)"
+          - "Model suggests 3-5 exercises per workout session"
+          - "Confidence scores are computed for each recommendation"
+          - "Model retrains nightly with new user data"
+        references:
+          - title: "ML Architecture Decision"
+            url: "https://notion.so/ml-architecture"
+          - title: "Collaborative Filtering Paper"
+            url: "https://arxiv.org/example"
+        constraints:
+          - "Model training must complete in <30 minutes"
+          - "Inference latency <200ms per request"
+          - "Minimum 5 workouts required for personalized recommendations"
+        definition_of_done:
+          - "Model training pipeline implemented"
+          - "Inference API endpoint deployed"
+          - "Performance benchmarks met"
+          - "All AC verified"
+          - "Jira updated"
+        estimate: 8
+        priority: "medium"
+        labels:
+          - "cto-engine"
+          - "ml"
+          - "backend"
+        
+      - story_key: ""
+        summary: "Display AI recommendations in exercise search UI"
+        objective: "Surface ML-generated exercise recommendations to users during workout creation, making it easier to discover relevant exercises and build balanced workouts."
+        scope:
+          in_scope:
+            - "Recommendations shown above search results"
+            - "Reason display for each recommendation"
+            - "Confidence indicators"
+            - "One-click add to workout"
+            - "Dismiss functionality"
+          out_of_scope:
+            - "User feedback on recommendations (thumbs up/down)"
+            - "Customizing recommendation preferences"
+            - "Recommendation history tracking"
+        acceptance_criteria:
+          - "Recommendations appear above search results"
+          - "Each recommendation shows exercise name, reason (e.g., 'complements legs'), and confidence"
+          - "User can dismiss recommendations"
+          - "User can add recommended exercise with one click"
+          - "Analytics tracks recommendation acceptance rate"
+        references:
+          - title: "UI Mockup - Recommendations"
+            url: "https://figma.com/recommendations"
+        constraints:
+          - "Recommendations must load in <500ms"
+          - "Fallback to empty state if API fails"
+          - "Clear visual distinction from search results"
+        definition_of_done:
+          - "UI component integrated"
+          - "Analytics tracking implemented"
+          - "All AC verified"
+          - "Jira updated"
+        estimate: 3
+        priority: "medium"
+        labels:
+          - "cto-engine"
+          - "ml"
+          - "frontend"
+        dependencies:
+          - "PROJ-201"  # Recommendation model story must be built first
+        
+      - story_key: ""
+        summary: "Implement fallback recommendations for new users"
+        objective: "Solve the cold start problem by providing rule-based exercise recommendations for users with insufficient workout history, ensuring a good experience from day one."
+        scope:
+          in_scope:
+            - "Detection of users with <5 workouts"
+            - "Rule-based recommendation engine"
+            - "Popular exercises by workout type"
+            - "Integration with onboarding responses"
+            - "Smooth transition to ML at 5+ workouts"
+          out_of_scope:
+            - "A/B testing different fallback strategies"
+            - "Manual curation of recommendations"
+            - "Fallback for users with stale data (>90 days)"
+        acceptance_criteria:
+          - "System detects users with insufficient history"
+          - "Fallback rules suggest popular exercises for selected workout type"
+          - "Recommendations adapt based on onboarding questionnaire responses"
+          - "Smooth transition to ML recommendations after 5 workouts"
+        references:
+          - title: "Onboarding Flow Spec"
+            url: "https://notion.so/onboarding"
+          - title: "Popular Exercises Dataset"
+            url: "https://docs.google.com/spreadsheets/..."
+        constraints:
+          - "Fallback must return results in <100ms"
+          - "Transition to ML should be imperceptible to user"
+          - "Rules must be configurable without code deploy"
+        definition_of_done:
+          - "Fallback logic implemented and tested"
+          - "Transition logic verified"
+          - "Performance requirements met"
+          - "All AC verified"
+          - "Jira updated"
+        estimate: 5
+        priority: "high"
+        labels:
+          - "cto-engine"
+          - "ml"
+          - "backend"
+
+  - epic_key: ""
+    summary: "Exercise library with form videos and instructions"
+    description: |
+      Comprehensive database of exercises with metadata, form videos,
+      and written instructions to help users perform exercises correctly.
+    stories:
+      - story_key: ""
+        summary: "Create exercise database schema and seed initial data"
+        objective: "Establish a comprehensive exercise library with structured metadata to enable search, filtering, and content display across the application."
+        scope:
+          in_scope:
+            - "Database schema design and implementation"
+            - "100 exercise seed data across all muscle groups"
+            - "Written instructions for each exercise"
+            - "Searchable tags system"
+            - "Repeatable migration scripts"
+          out_of_scope:
+            - "Form videos (separate content story)"
+            - "User-generated exercises"
+            - "Exercise variations and progressions"
+        acceptance_criteria:
+          - "Schema includes: name, description, muscle_group, equipment, difficulty, video_url"
+          - "100 exercises seeded across all major muscle groups"
+          - "Each exercise has written instructions (setup, execution, common mistakes)"
+          - "Database includes searchable tags (e.g., 'compound', 'isolation', 'bodyweight')"
+          - "Migration scripts are repeatable and documented"
+        references:
+          - title: "Exercise Library Content Sheet"
+            url: "https://docs.google.com/spreadsheets/..."
+          - title: "Database Schema Design"
+            url: "https://dbdiagram.io/..."
+        constraints:
+          - "Schema must support future internationalization"
+          - "Tag system must be extensible without migrations"
+          - "All exercises must have at least one muscle group"
+        definition_of_done:
+          - "Schema deployed to production"
+          - "Seed data verified for completeness"
+          - "Migration rollback tested"
+          - "All AC verified"
+          - "Jira updated"
+        estimate: 5
+        priority: "high"
+        labels:
+          - "cto-engine"
+          - "backend"
+          - "content"
+        
+      - story_key: ""
+        summary: "Implement video player with progressive loading"
+        objective: "Deliver form videos efficiently across varying network conditions to help users learn proper exercise technique without frustrating load times."
+        scope:
+          in_scope:
+            - "Custom video player component"
+            - "Progressive loading with caching"
+            - "Adaptive quality based on network speed"
+            - "Standard playback controls"
+            - "Fallback to static image on error"
+          out_of_scope:
+            - "Video recording or editing features"
+            - "Picture-in-picture mode"
+            - "Playback speed controls"
+            - "Video analytics beyond play/completion"
+        acceptance_criteria:
+          - "Videos load in <2 seconds on 4G connection"
+          - "Player supports play/pause/seek controls"
+          - "Videos are cached after first view"
+          - "Adaptive quality: 720p on WiFi, 480p on cellular"
+          - "Fallback to static image if video fails to load"
+          - "Analytics track video play rate and completion rate"
+        references:
+          - title: "Video Delivery Architecture"
+            url: "https://notion.so/video-architecture"
+          - title: "CDN Configuration"
+            url: "https://cloudflare.com/..."
+        constraints:
+          - "Must work on iOS Safari and Chrome"
+          - "Video files must be <10MB per exercise"
+          - "Cache size limited to 100MB per user"
+        definition_of_done:
+          - "Player component built and tested on target devices"
+          - "Caching verified across sessions"
+          - "Performance benchmarks met"
+          - "All AC verified"
+          - "Jira updated"
+        estimate: 8
+        priority: "medium"
+        labels:
+          - "cto-engine"
+          - "frontend"
+          - "performance"
+
+assumptions:
+  - "Users have consistent internet access during workouts (may break in gyms with poor signal)"
+  - "Exercise form videos are available for all 100 seeded exercises (vendor dependency)"
+  - "Users are motivated to log workouts immediately after completing them"
+  - "AI recommendations improve retention (needs validation after launch)"
+  - "Users understand gym terminology (barbell, dumbbell, cable, etc.)"
+
+dependencies:
+  - description: "Exercise form video library from vendor FitVids"
+    type: "third_party"
+    blocker: false
+  
+  - description: "Claude API for AI recommendation engine"
+    type: "external_api"
+    blocker: false
+  
+  - description: "Mobile app release pending App Store review"
+    type: "infrastructure"
+    blocker: true
+
+metadata:
+  created_at: "2026-02-01T10:30:00Z"
+  approved_at: "2026-02-01T11:00:00Z"
+  approved_by: "founder@example.com"
+  commit_sha: "abcdef1234567890abcdef1234567890abcdef12"
+  week_number: 5
+  ai_proposal_followed: false  # Chose different scope than AI recommended

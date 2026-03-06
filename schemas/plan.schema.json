@@ -1,0 +1,287 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cto-engine.dev/schemas/plan.schema.json",
+  "title": "CTO Engine Plan",
+  "description": "Schema for approved execution plans in the CTO Engine",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "goal",
+    "success_criteria",
+    "risks",
+    "work_breakdown",
+    "assumptions"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for compatibility tracking",
+      "pattern": "^\\d+\\.\\d+$",
+      "examples": ["1.0"]
+    },
+    "goal": {
+      "type": "string",
+      "description": "One-sentence outcome this plan achieves",
+      "minLength": 10,
+      "maxLength": 200
+    },
+    "success_criteria": {
+      "type": "array",
+      "description": "Measurable criteria that define success",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "risks": {
+      "type": "array",
+      "description": "Identified risks and their mitigation strategies",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["risk", "mitigation", "severity"],
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "Description of the risk",
+            "minLength": 10
+          },
+          "mitigation": {
+            "type": "string",
+            "description": "How this risk will be handled",
+            "minLength": 10
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "description": "Impact level if risk materializes"
+          },
+          "ai_warned": {
+            "type": "boolean",
+            "description": "Whether AI flagged this risk",
+            "default": false
+          }
+        }
+      }
+    },
+    "work_breakdown": {
+      "type": "array",
+      "description": "EPICs and stories to be created in Jira",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["epic_key", "summary", "stories"],
+        "properties": {
+          "epic_key": {
+            "type": "string",
+            "description": "Jira EPIC key (leave empty for auto-generation)",
+            "pattern": "^([A-Z]+-\\d+)?$"
+          },
+          "summary": {
+            "type": "string",
+            "description": "EPIC title",
+            "minLength": 10,
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "description": "EPIC description (optional)"
+          },
+          "stories": {
+            "type": "array",
+            "description": "Stories within this EPIC",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["summary", "objective", "scope", "acceptance_criteria", "definition_of_done", "estimate"],
+              "properties": {
+                "story_key": {
+                  "type": "string",
+                  "description": "Jira story key (leave empty for auto-generation)",
+                  "pattern": "^([A-Z]+-\\d+)?$"
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "Story title",
+                  "minLength": 10,
+                  "maxLength": 150
+                },
+                "objective": {
+                  "type": "string",
+                  "description": "What this story achieves and why it matters",
+                  "minLength": 20
+                },
+                "scope": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "description": "What is and isn't included in this story",
+                  "required": ["in_scope", "out_of_scope"],
+                  "properties": {
+                    "in_scope": {
+                      "type": "array",
+                      "description": "Features/functionality included",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string",
+                        "minLength": 5
+                      }
+                    },
+                    "out_of_scope": {
+                      "type": "array",
+                      "description": "Features/functionality explicitly excluded",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string",
+                        "minLength": 5
+                      }
+                    }
+                  }
+                },
+                "acceptance_criteria": {
+                  "type": "array",
+                  "description": "Numbered, testable acceptance criteria",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 10
+                  }
+                },
+                "references": {
+                  "type": "array",
+                  "description": "Links to docs, decisions, or related resources",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["title", "url"],
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "description": "Reference title or description"
+                      },
+                      "url": {
+                        "type": "string",
+                        "description": "URL or location of reference"
+                      }
+                    }
+                  }
+                },
+                "constraints": {
+                  "type": "array",
+                  "description": "Technical or business constraints/rules",
+                  "items": {
+                    "type": "string",
+                    "minLength": 10
+                  }
+                },
+                "definition_of_done": {
+                  "type": "array",
+                  "description": "Checklist for story completion",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 5
+                  }
+                },
+                "estimate": {
+                  "type": "integer",
+                  "description": "Story points estimate",
+                  "enum": [1, 2, 3, 5, 8, 13]
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": ["lowest", "low", "medium", "high", "highest"],
+                  "default": "medium"
+                },
+                "labels": {
+                  "type": "array",
+                  "description": "Jira labels",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "dependencies": {
+                  "type": "array",
+                  "description": "Story keys this story depends on",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Z]+-\\d+$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "description": "Explicit assumptions that could break",
+      "minItems": 0,
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "External dependencies or blockers",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "type"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 10
+          },
+          "type": {
+            "type": "string",
+            "enum": ["external_api", "third_party", "infrastructure", "team", "other"]
+          },
+          "blocker": {
+            "type": "boolean",
+            "description": "Whether this is a current blocker",
+            "default": false
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Plan metadata (auto-populated)",
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "commit_sha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "week_number": {
+          "type": "integer",
+          "description": "ISO week number"
+        },
+        "ai_proposal_followed": {
+          "type": "boolean",
+          "description": "Whether this plan follows AI recommendations"
+        }
+      }
+    }
+  }
+}
