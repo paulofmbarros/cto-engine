@@ -1,0 +1,39 @@
+@startuml
+title CTO Engine - LLM Candidate Planning (Gemini)
+
+actor Human
+participant "CTO CLI" as CLI
+participant "PlanProposalService" as PPS
+participant "LlmConfigValidator" as LCV
+participant "GeminiClient" as GC
+participant "PlanValidator" as PV
+database "Project Files" as PF
+
+Human -> CLI : plan --llm --provider gemini --candidates 3
+CLI -> PPS : GenerateAsync(projectRoot, options)
+PPS -> LCV : ValidateAsync(.cto-engine/llm-config.yaml)
+LCV --> PPS : valid/invalid
+
+alt Invalid config
+  PPS --> CLI : fail (blocked)
+  CLI --> Human : error messages
+else Valid config
+  PPS -> PF : Read charter/context/weeklylog/reality-check/challenge-log
+  PPS -> GC : GeneratePlansAsync(prompt)
+  GC --> PPS : JSON with 3 candidates + token usage
+  loop candidate files
+    PPS -> PF : Write candidate-{n}.plan.yaml
+    PPS -> PV : ValidateAsync(candidate file)
+    PV --> PPS : pass/fail issues
+  end
+  PPS -> PF : Write candidates-summary.md
+  PPS -> PF : Write llm-run-*.json log
+  PPS --> CLI : success + paths
+  CLI --> Human : candidates ready
+end
+
+Human -> CLI : plan --select 2
+CLI -> PF : Copy candidate-2.plan.yaml -> plan.yaml
+CLI --> Human : selected plan promoted
+
+@enduml

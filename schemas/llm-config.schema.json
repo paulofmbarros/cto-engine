@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cto-engine.dev/schemas/llm-config.schema.json",
+  "title": "CTO Engine LLM Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "provider",
+    "providers",
+    "generation",
+    "inputs",
+    "output",
+    "validation",
+    "budget",
+    "retry",
+    "logging",
+    "security"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "provider": {
+      "type": "string",
+      "enum": ["gemini"]
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gemini"],
+      "properties": {
+        "gemini": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["api_key_env_var", "model", "base_url"],
+          "properties": {
+            "api_key_env_var": {
+              "type": "string",
+              "minLength": 1
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "base_url": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "generation": {
+      "type": "object",
+      "required": ["candidates", "max_output_tokens_per_candidate"],
+      "properties": {
+        "candidates": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "temperature": {
+          "type": "number"
+        },
+        "top_p": {
+          "type": "number"
+        },
+        "max_output_tokens_per_candidate": {
+          "type": "integer",
+          "minimum": 256
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": ["candidate_file_pattern"],
+      "properties": {
+        "candidate_file_pattern": {
+          "type": "string",
+          "pattern": "\\{n\\}"
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "required": ["max_requests_per_run", "max_total_output_tokens", "max_cost_usd_per_run"],
+      "properties": {
+        "max_requests_per_run": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_total_output_tokens": {
+          "type": "integer",
+          "minimum": 512
+        },
+        "max_cost_usd_per_run": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    }
+  }
+}

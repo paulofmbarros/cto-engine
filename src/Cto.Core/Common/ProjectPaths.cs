@@ -9,6 +9,7 @@ public sealed class ProjectPaths
     public required string PlanPath { get; init; }
     public required string CtoEngineDirectory { get; init; }
     public required string JiraConfigPath { get; init; }
+    public required string LlmConfigPath { get; init; }
     public required string ChallengeLogPath { get; init; }
     public required string SnapshotPath { get; init; }
     public required string RealityCheckPath { get; init; }
@@ -29,6 +30,7 @@ public sealed class ProjectPaths
             PlanPath = Path.Combine(root, "plan.yaml"),
             CtoEngineDirectory = engineDir,
             JiraConfigPath = Path.Combine(engineDir, "jira-config.yaml"),
+            LlmConfigPath = Path.Combine(engineDir, "llm-config.yaml"),
             ChallengeLogPath = Path.Combine(engineDir, "challenge-log.yaml"),
             SnapshotPath = Path.Combine(engineDir, "snapshot.json"),
             RealityCheckPath = Path.Combine(engineDir, "reality-check.md"),

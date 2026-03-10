@@ -1,5 +1,6 @@
 using Cto.Core;
 using Cto.Core.Common;
+using Cto.Core.Planning;
 
 return await ProgramEntry.RunAsync(args);
 
@@ -71,6 +72,58 @@ internal static class ProgramEntry
     private static Task<OperationResult> RunPlanAsync(CtoEngineApp app, string[] args)
     {
         var projectRoot = GetOptionValue(args, "--project") ?? Environment.CurrentDirectory;
+
+        if (HasFlag(args, "--list-candidates"))
+        {
+            return app.ListPlanCandidatesAsync(projectRoot);
+        }
+
+        var selectCandidate = GetOptionValue(args, "--select");
+        if (!string.IsNullOrWhiteSpace(selectCandidate))
+        {
+            if (!int.TryParse(selectCandidate, out var selected) || selected < 1)
+            {
+                return Task.FromResult(OperationResult.Fail("Invalid --select value. Expected a positive integer."));
+            }
+
+            return app.SelectPlanCandidateAsync(projectRoot, selected);
+        }
+
+        if (HasFlag(args, "--llm"))
+        {
+            if (!TryGetIntOption(args, "--candidates", out var candidates, out var candidatesError))
+            {
+                return Task.FromResult(OperationResult.Fail(candidatesError!));
+            }
+
+            if (!TryGetIntOption(args, "--max-input-tokens", out var maxInputTokens, out var inputError))
+            {
+                return Task.FromResult(OperationResult.Fail(inputError!));
+            }
+
+            if (!TryGetIntOption(args, "--max-output-tokens", out var maxOutputTokens, out var outputError))
+            {
+                return Task.FromResult(OperationResult.Fail(outputError!));
+            }
+
+            if (!TryGetDoubleOption(args, "--budget-usd", out var budgetUsd, out var budgetError))
+            {
+                return Task.FromResult(OperationResult.Fail(budgetError!));
+            }
+
+            var options = new PlanLlmOptions
+            {
+                Provider = GetOptionValue(args, "--provider"),
+                Candidates = candidates,
+                VisionFile = GetOptionValue(args, "--vision-file"),
+                MaxInputTokens = maxInputTokens,
+                MaxOutputTokensPerCandidate = maxOutputTokens,
+                BudgetUsd = budgetUsd,
+            };
+
+            return app.PlanWithLlmAsync(projectRoot, options);
+        }
+
         var interactive = HasFlag(args, "--interactive");
         return app.PlanInteractiveAsync(projectRoot, interactive);
     }
@@ -96,8 +149,11 @@ internal static class ProgramEntry
         Console.WriteLine("  cto-engine init --path <target> [--force]");
         Console.WriteLine("  cto-engine snapshot --project <project-root>");
         Console.WriteLine("  cto-engine reality-check --project <project-root>");
-        Console.WriteLine("  cto-engine validate --project <project-root> --target <all|plan|context|weeklylog|jira-config>");
+        Console.WriteLine("  cto-engine validate --project <project-root> --target <all|plan|context|weeklylog|jira-config|llm-config>");
         Console.WriteLine("  cto-engine plan --interactive --project <project-root>");
+        Console.WriteLine("  cto-engine plan --llm [--provider gemini] [--candidates 3] [--vision-file <path>] [--max-input-tokens 12000] [--max-output-tokens 3500] [--budget-usd 3.0] --project <project-root>");
+        Console.WriteLine("  cto-engine plan --list-candidates --project <project-root>");
+        Console.WriteLine("  cto-engine plan --select <n> --project <project-root>");
         Console.WriteLine("  cto-engine approve --project <project-root>");
         Console.WriteLine("  cto-engine execute --project <project-root> [--dry-run]");
     }
@@ -122,6 +178,46 @@ internal static class ProgramEntry
 
     private static bool HasFlag(string[] args, string flag)
         => args.Any(arg => string.Equals(arg, flag, StringComparison.Ordinal));
+
+    private static bool TryGetIntOption(string[] args, string option, out int? value, out string? error)
+    {
+        error = null;
+        value = null;
+        var raw = GetOptionValue(args, option);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return true;
+        }
+
+        if (!int.TryParse(raw, out var parsed))
+        {
+            error = $"Invalid {option} value '{raw}'. Expected integer.";
+            return false;
+        }
+
+        value = parsed;
+        return true;
+    }
+
+    private static bool TryGetDoubleOption(string[] args, string option, out double? value, out string? error)
+    {
+        error = null;
+        value = null;
+        var raw = GetOptionValue(args, option);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return true;
+        }
+
+        if (!double.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+        {
+            error = $"Invalid {option} value '{raw}'. Expected decimal number (for example 2.5).";
+            return false;
+        }
+
+        value = parsed;
+        return true;
+    }
 
     private static string ResolveEngineRoot(string startDirectory)
     {

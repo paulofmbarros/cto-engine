@@ -14,6 +14,7 @@ This directory contains the complete schema definitions and templates for the CT
    cp weeklylog.md.template my-project/weeklylog.md
    cp jira-config.yaml.template my-project/.cto-engine/jira-config.yaml
    cp challenge-log.yaml.template my-project/.cto-engine/challenge-log.yaml
+   cp llm-config.yaml.template my-project/.cto-engine/llm-config.yaml
    ```
 
 2. Fill in your charter.md (this never changes)
@@ -124,6 +125,7 @@ project-root/
 ├── plan.yaml               # Approved execution plan (git-committed)
 ├── .cto-engine/
 │   ├── jira-config.yaml    # Jira integration settings
+│   ├── llm-config.yaml     # Gemini planning settings (optional unless using --llm)
 │   ├── challenge-log.yaml  # AI warning outcomes tracker
 │   ├── snapshot.json       # Generated Jira state (read-only)
 │   ├── reality-check.md    # Plan vs. actual comparison (generated)
@@ -247,6 +249,23 @@ Each challenge entry captures:
 
 ---
 
+### 7. llm-config.yaml.template
+
+**Purpose:** Configures provider-backed planning candidate generation (Gemini in v1).
+
+**Key sections:**
+- Provider and model (`provider`, `providers.gemini.*`)
+- Generation strategy (`generation.candidates`, temperature, token limits)
+- Input/output contracts (required files, candidate naming, summary file)
+- Validation and budget controls (minimum valid plans, max tokens/cost)
+- Logging and security controls
+
+**Security rule:** API keys are never stored in this file. Use `api_key_env_var` and shell/CI secrets.
+
+**Update frequency:** Rarely (model or budget changes).
+
+---
+
 ## Schema Validation Rules
 
 ### plan.yaml validation
@@ -274,7 +293,7 @@ Each challenge entry captures:
 - Blockers must be explicit (or "None")
 - Metrics must be quantified
 
-**Enforcement:** Warning logged on save. `cto-engine plan --interactive` and `cto-engine execute` are blocked if validation fails.
+**Enforcement:** Warning logged on save. `make plan-interactive PROJECT=...` and `make execute PROJECT=...` are blocked if validation fails.
 
 ---
 
@@ -286,7 +305,25 @@ Each challenge entry captures:
 - Surprises must be specific (not vague)
 - Blockers must quantify time impact
 
-**Enforcement:** Warning logged on save. `cto-engine plan --interactive` and `cto-engine execute` are blocked if validation fails.
+**Enforcement:** Warning logged on save. `make plan-interactive PROJECT=...` and `make execute PROJECT=...` are blocked if validation fails.
+
+---
+
+### llm-config.yaml validation
+
+**Required fields:**
+- `provider` must be `gemini`
+- `providers.gemini.api_key_env_var`
+- `providers.gemini.model`
+- `providers.gemini.base_url`
+- `output.candidate_file_pattern` must contain `{n}`
+
+**Constraints:**
+- `generation.candidates` range: 1..5
+- `generation.max_output_tokens_per_candidate` >= 256
+- Budget limits must be positive
+
+**Enforcement:** `make plan-llm PROJECT=...` is blocked if llm-config is invalid.
 
 ---
 
@@ -295,7 +332,8 @@ Each challenge entry captures:
 ### Step 1: Reality Check (automated)
 
 ```bash
-cto-engine reality-check
+make doctor PROJECT=/path/to/project
+make reality-check PROJECT=/path/to/project
 ```
 
 **Reads:**
@@ -327,7 +365,7 @@ vim weeklylog.md
 ### Step 3: AI Planning Session (semi-automated)
 
 ```bash
-cto-engine plan --interactive
+make plan-interactive PROJECT=/path/to/project
 ```
 
 **Reads:**
@@ -344,6 +382,12 @@ cto-engine plan --interactive
 - Input files against schemas before sending to AI
 - Planning session is blocked if `context.md` or `weeklylog.md` fails validation
 
+**LLM review shortcut:**
+```bash
+make weekly-review PROJECT=/path/to/project CANDIDATES=3
+```
+This runs doctor, snapshot, reality-check, LLM planning, and candidate listing in one pass.
+
 ---
 
 ### Step 4: Approve Plan (manual + automated)
@@ -353,10 +397,10 @@ cto-engine plan --interactive
 vim plan.yaml
 
 # Validate schema
-cto-engine validate plan.yaml
+make validate PROJECT=/path/to/project TARGET=plan
 
 # If valid, approve (creates git commit)
-cto-engine approve
+make approve PROJECT=/path/to/project
 ```
 
 **Validates:**
@@ -374,7 +418,7 @@ cto-engine approve
 ### Step 5: Execute (automated)
 
 ```bash
-cto-engine execute
+make execute PROJECT=/path/to/project
 ```
 
 **Reads:**
@@ -403,7 +447,7 @@ cto-engine execute
 
 ### Schema validation failures
 
-**When:** Running `cto-engine validate` or `approve`
+**When:** Running `make validate ...` or `make approve ...`
 
 **Behavior:**
 - Validation errors printed to console
@@ -455,7 +499,7 @@ Execute blocked: Cannot create tickets without Jira connection
 
 ### Duplicate ticket prevention
 
-**When:** Running `cto-engine execute` multiple times
+**When:** Running `make execute PROJECT=...` multiple times
 
 **Behavior:**
 - Checks for existing tickets with same commit SHA issue property
@@ -614,7 +658,7 @@ git commit -m "Migrate plan.yaml to schema 2.0"
 **Fix:**
 ```bash
 # See specific errors
-cto-engine validate plan.yaml --verbose
+make validate PROJECT=/path/to/project TARGET=plan
 
 # Common fixes:
 # - goal too short: must be 10-200 chars
@@ -633,7 +677,7 @@ cto-engine validate plan.yaml --verbose
 **Fix:**
 ```bash
 # Check which sections are missing
-cto-engine validate context.md --verbose
+make validate PROJECT=/path/to/project TARGET=context
 
 # Required sections:
 # - What exists?
@@ -651,7 +695,7 @@ cto-engine validate context.md --verbose
 **Fix:**
 ```bash
 # Validate config
-cto-engine validate jira-config.yaml --verbose
+make validate-jira PROJECT=/path/to/project
 
 # Common issues:
 # - Missing JIRA_EMAIL or JIRA_API_TOKEN env vars
@@ -669,11 +713,28 @@ cto-engine validate jira-config.yaml --verbose
 **Fix:**
 ```bash
 # Approve the plan first
-cto-engine approve
+make approve PROJECT=/path/to/project
 
 # This requires a clean repo and creates a git commit with SHA
 # Execute will now work
-cto-engine execute
+make execute PROJECT=/path/to/project
+```
+
+---
+
+### "Doctor failed"
+
+**Cause:** Project contract files or required environment variables are missing
+
+**Fix:**
+```bash
+make doctor PROJECT=/path/to/project
+
+# Common issues:
+# - Missing charter.md/context.md/weeklylog.md/plan.yaml
+# - Missing .cto-engine/jira-config.yaml
+# - Missing JIRA_EMAIL or JIRA_API_TOKEN
+# - Missing GEMINI_API_KEY when using weekly-review / plan-llm
 ```
 
 ---
@@ -717,9 +778,9 @@ cto-engine/
         ├── plan.yaml
         └── .cto-engine/
 
-# Run commands with --project flag
-cto-engine plan --project=project-a
-cto-engine execute --project=project-b
+# Run commands with PROJECT=...
+make plan-interactive PROJECT=projects/project-a
+make execute PROJECT=projects/project-b
 ```
 
 ---
@@ -740,7 +801,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run snapshot
-        run: cto-engine snapshot
+        run: make snapshot PROJECT=./projects/my-product
         env:
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}

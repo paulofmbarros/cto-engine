@@ -1,0 +1,30 @@
+@startuml
+title CTO Engine - Weekly Operations Flow
+
+start
+:Update context.md and weeklylog.md;
+:Run snapshot;
+:Run reality-check;
+
+if (Planning mode?) then (Interactive)
+  :Run plan --interactive;
+  :Human consolidates plan.yaml manually;
+else (LLM)
+  :Run plan --llm --candidates 3;
+  :Review candidates-summary.md;
+  :Run plan --select <n>;
+endif
+
+:Run validate --target all;
+
+if (Validation passed?) then (Yes)
+  :Run approve;
+  :Run execute --dry-run;
+  :Run execute;
+  :Snapshot refresh and logs written;
+else (No)
+  :Fix documents and rerun validation;
+endif
+
+stop
+@enduml

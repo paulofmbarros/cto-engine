@@ -1,0 +1,26 @@
+@startuml
+title CTO Engine - Approval and Execution Guardrails
+
+start
+:Run validate --target all;
+if (All valid?) then (Yes)
+  :Run approve;
+  if (Only plan.yaml + challenge-log changed?) then (Yes)
+    :Create commit "cto-engine: approve plan YYYY-Www";
+    :Run execute;
+    if (HEAD is approval commit?) then (Yes)
+      :Create/update Jira issues;
+      :Write execute logs;
+      :Refresh snapshot;
+    else (No)
+      :Block execution;
+    endif
+  else (No)
+    :Block approval;
+  endif
+else (No)
+  :Block approval and execution;
+endif
+stop
+
+@enduml

@@ -9,6 +9,7 @@ public enum ValidationTarget
     Context,
     WeeklyLog,
     JiraConfig,
+    LlmConfig,
 }
 
 public sealed class ValidationService
@@ -17,6 +18,7 @@ public sealed class ValidationService
     private readonly ContextValidator _contextValidator = new();
     private readonly WeeklyLogValidator _weeklyLogValidator = new();
     private readonly JiraConfigValidator _jiraConfigValidator = new();
+    private readonly LlmConfigValidator _llmConfigValidator = new();
 
     public async Task<(ValidationResult Result, JiraConfig? JiraConfig)> ValidateAsync(
         ProjectPaths paths,
@@ -46,6 +48,12 @@ public sealed class ValidationService
             var configValidation = await _jiraConfigValidator.ValidateAsync(paths.JiraConfigPath, cancellationToken);
             config = configValidation.Config;
             result.Merge(configValidation.Result);
+        }
+
+        if (target is ValidationTarget.LlmConfig)
+        {
+            var llmValidation = await _llmConfigValidator.ValidateAsync(paths.LlmConfigPath, cancellationToken);
+            result.Merge(llmValidation.Result);
         }
 
         return (result, config);

@@ -1,0 +1,62 @@
+# LLM Planning Configuration
+# Security: API keys must come from environment variables only.
+
+version: "1.0"
+
+provider: "gemini"
+
+providers:
+  gemini:
+    api_key_env_var: "GEMINI_API_KEY"
+    model: "gemini-2.0-flash"
+    base_url: "https://generativelanguage.googleapis.com"
+
+generation:
+  candidates: 3
+  temperature: 0.4
+  top_p: 0.9
+  max_output_tokens_per_candidate: 3500
+  stop_on_first_valid: false
+
+inputs:
+  required_files:
+    - "charter.md"
+    - "context.md"
+    - "weeklylog.md"
+    - ".cto-engine/reality-check.md"
+    - ".cto-engine/challenge-log.yaml"
+  optional_files:
+    - "docs/company-vision.md"
+
+output:
+  proposal_dir_pattern: "docs/proposals/{iso_year}-W{iso_week}"
+  candidate_file_pattern: "candidate-{n}.plan.yaml"
+  summary_file: "candidates-summary.md"
+
+validation:
+  run_plan_validator: true
+  require_min_valid_candidates: 1
+  auto_repair_attempts: 0
+
+budget:
+  max_requests_per_run: 6
+  max_total_output_tokens: 30000
+  max_cost_usd_per_run: 3.0
+
+retry:
+  max_retries: 3
+  initial_backoff_ms: 750
+  max_backoff_ms: 5000
+
+logging:
+  enabled: true
+  log_dir: ".cto-engine/logs"
+  persist_raw_llm_response: false
+  include_token_usage: true
+  include_prompt_hash: true
+
+security:
+  redact_env_vars:
+    - "GEMINI_API_KEY"
+    - "JIRA_API_TOKEN"
+  store_full_prompt: false
